@@ -8,8 +8,8 @@ import math
 # Stage a
 
 # Step a1
-server = "attu2.cs.washington.edu"
-# server = "localhost"
+# server = "attu2.cs.washington.edu"
+server = "localhost"
 port = 12235 # UDP port
 studentNum = 242 # last 3 digits of my student number
 message = pack(">IIHH12s", 12, 0, 1, studentNum, bytes("hello world", 'ascii'))
@@ -60,4 +60,5 @@ for i in range(num2):
 packet = sock.recv(16)
 print("d receive: ", unpack(">IIHHI", packet[:16]))
 payload_len, psecret, step, student, secretD = unpack(">IIHHI", packet[:16])
-# print("secretD:", secretD)
+
+print(secretA, secretB, secretC, secretD)
