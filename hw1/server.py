@@ -12,48 +12,18 @@ class NewThread(Thread):
         super().__init__()
         self.sock = sock
 
-    def handle_cd_request(self, tcp_port, secretB):
-        sock_cd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock_cd.bind(('localhost', tcp_port))
-        sock_cd.settimeout(3)
-        sock_cd.listen(5)
-        while True:
-            clientsocket, address = sock_cd.accept()
-            print(f"Connection from {address} has been established.")
-            num2, len2, secretC = randrange(50), randrange(30), randrange(100)
-            c = os.urandom(1)
-            message = pack(">IIHHIIIc3s", 13, secretB, 2, 810, num2, len2, secretC, c, bytes(0))
-            clientsocket.send(message)
-            print("Sent Step c2")
-
-            counter = 0
-            p_length = math.ceil(len2 / 4) * 4
-            temp = ">IIHH" + str(p_length) + "s"
-            try:
-                while counter < num2:
-                    try:
-                        packet = clientsocket.recv(12 + p_length)
-                        payload_len, psecret, step, student, payload_content = unpack(temp, packet)
-                        if payload_len != len2 or psecret != secretC or step != 1:
-                            print("client StageD header incorrect (failed)")
-                            sock_cd.close()
-                            break
-                        else:
-                            counter += 1
-                            print("Received ", counter)
-                            if counter == num2:
-                                print("All received")
-                                secretD = randrange(100)
-                                message = pack(">IIHHI", 4, secretC, 2, 810, secretD)
-                                clientsocket.send(message)
-                                print("Sent Step d2")
-                    except OSError as err:
-                        print(err)
-                        sock_cd.close()
-                        break
-            except KeyboardInterrupt:
-                sock_cd.close()
-
+    def handle_a_request(self, packet, address):
+        payload_len, psecret, step, student, string = unpack(">IIHH12s", packet)
+        self.studentNum = student # record studnet num for the session
+        print(unpack(">IIHH12s", packet))
+        if string.decode("ascii") != 'hello world\0' or payload_len != 12 or psecret != 0 or step != 1:
+            print("client StageA header incorrect (failed)")
+            self.sock.close()
+        else:
+            num, len_b, udp_port, secretA = randrange(50), randrange(30), randrange(10000, 20000), randrange(100)
+            message = pack(">IIHHIIII", 16, 0, 2, self.studentNum, num, len_b, udp_port, secretA)
+            self.sock.sendto(message, address)
+            self.handle_b_request(num, len_b, udp_port, secretA)
 
     def handle_b_request(self, num, len_b, udp_port, secretA):
         sock_b = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -92,17 +62,47 @@ class NewThread(Thread):
         except KeyboardInterrupt:
             sock_b.close()
 
-    def handle_a_request(self, packet, address):
-        payload_len, psecret, step, student, string = unpack(">IIHH12s", packet)
-        print(unpack(">IIHH12s", packet))
-        if string.decode("ascii") != 'hello world\0' or payload_len != 12 or psecret != 0 or step != 1:
-            print("client StageA header incorrect (failed)")
-            self.sock.close()
-        else:
-            num, len_b, udp_port, secretA = randrange(50), randrange(30), randrange(10000, 20000), randrange(100)
-            message = pack(">IIHHIIII", 16, 0, 2, 810, num, len_b, udp_port, secretA)
-            self.sock.sendto(message, address)
-            self.handle_b_request(num, len_b, udp_port, secretA)
+    def handle_cd_request(self, tcp_port, secretB):
+        sock_cd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock_cd.bind(('localhost', tcp_port))
+        sock_cd.settimeout(3)
+        sock_cd.listen(5)
+        while True:
+            clientsocket, address = sock_cd.accept()
+            print(f"Connection from {address} has been established.")
+            num2, len2, secretC = randrange(50), randrange(30), randrange(100)
+            c = os.urandom(1)
+            message = pack(">IIHHIIIc3s", 13, secretB, 2, self.studentNum, num2, len2, secretC, c, bytes(0))
+            clientsocket.send(message)
+            print("Sent Step c2")
+
+            counter = 0
+            p_length = math.ceil(len2 / 4) * 4
+            temp = ">IIHH" + str(p_length) + "s"
+            try:
+                while counter < num2:
+                    try:
+                        packet = clientsocket.recv(12 + p_length)
+                        payload_len, psecret, step, student, payload_content = unpack(temp, packet)
+                        if payload_len != len2 or psecret != secretC or step != 1:
+                            print("client StageD header incorrect (failed)")
+                            sock_cd.close()
+                            break
+                        else:
+                            counter += 1
+                            print("Received ", counter)
+                            if counter == num2:
+                                print("All received")
+                                secretD = randrange(100)
+                                message = pack(">IIHHI", 4, secretC, 2, student, secretD)
+                                clientsocket.send(message)
+                                print("Sent Step d2")
+                    except OSError as err:
+                        print(err)
+                        sock_cd.close()
+                        break
+            except KeyboardInterrupt:
+                sock_cd.close()
 
     def wait_for_client(self):
         try:

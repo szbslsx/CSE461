@@ -3,7 +3,7 @@ Part 1 Client
 Group member:
 Zebang Song (szbslsx), Weifan Wu (weifan)
 
-server secrects: 45, 32, 1, 1
+server secrects: 69 72 5 12
 
 Instruction on how to run: 
 

@@ -11,7 +11,7 @@ import math
 # server = "attu2.cs.washington.edu"
 server = "localhost"
 port = 12235 # UDP port
-studentNum = 242 # last 3 digits of my student number
+studentNum = 243 # last 3 digits of my student number
 message = pack(">IIHH12s", 12, 0, 1, studentNum, bytes("hello world", 'ascii'))
 print("a1 sent: ", message)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
