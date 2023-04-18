@@ -1,4 +1,4 @@
-Part 1 Client
+Part 2 Server
 
 Group member:
 Zebang Song (szbslsx), Weifan Wu (weifan)

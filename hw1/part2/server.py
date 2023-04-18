@@ -8,11 +8,24 @@ import math
 
 
 class NewThread(Thread):
+    """
+    this NewThread class verify the client's request and send back corresponding response
+    """
     def __init__(self, sock):
+        """
+        taking two files name and merge them together
+        and return the new dataframe
+        """
         super().__init__()
         self.sock = sock
 
+
     def handle_a_request(self, packet, address):
+        """
+        this method takes in an address and a UDP packet which contains String "Hello World". it first
+        verify the payload and then send back to the address with a UPD packet and contains
+        four random number: num, len, udp_port, secretA.
+        """
         payload_len, psecret, step, student, string = unpack(">IIHH12s", packet)
         self.studentNum = student # record studnet num for the session
         print(unpack(">IIHH12s", packet))
@@ -24,8 +37,12 @@ class NewThread(Thread):
             message = pack(">IIHHIIII", 16, 0, 2, self.studentNum, num, len_b, udp_port, secretA)
             self.sock.sendto(message, address)
             self.handle_b_request(num, len_b, udp_port, secretA)
-
+    
     def handle_b_request(self, num, len_b, udp_port, secretA):
+        """
+        this method takes takes in num UDP packets and doing the verifcation. the server will
+        randomly decide whether to send back the ACK responses by replying ACK packets
+        """
         sock_b = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock_b.bind(('localhost', udp_port))
         sock_b.settimeout(3)
@@ -63,6 +80,12 @@ class NewThread(Thread):
             sock_b.close()
 
     def handle_cd_request(self, tcp_port, secretB):
+        """
+        the method takes in a paramter number tcp_port and establish a connection to the port
+        then send a back with a packet contains three integers: num2, len2, secretC, and a character: c
+        the method then respond a packet with one integer payload: secretD, when receive the packet
+        from client
+        """
         sock_cd = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock_cd.bind(('localhost', tcp_port))
         sock_cd.settimeout(3)
@@ -105,6 +128,10 @@ class NewThread(Thread):
                 sock_cd.close()
 
     def wait_for_client(self):
+        """
+        listening to request from client on port 12235
+        shut down the server when encountering errors
+        """
         try:
             while True:
                 try:
@@ -119,6 +146,9 @@ class NewThread(Thread):
             self.shutdown_server()
 
     def shutdown_server(self, s):
+        """
+        close the server socket
+        """
         self.sock.close()
 
 
